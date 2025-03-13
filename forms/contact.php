@@ -1,30 +1,33 @@
 <?php
-  $receiving_email_address = 'swethasksn@gmail.com';
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Your email address where the messages should be sent
+    $to = "swethasksn@gmail.com";  // Replace with your actual email
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
-  }
+    // Get form data
+    $name = isset($_POST['name']) ? strip_tags(trim($_POST['name'])) : '';
+    $email = isset($_POST['email']) ? filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL) : '';
+    $subject = isset($_POST['subject']) ? strip_tags(trim($_POST['subject'])) : 'New Contact Form Submission';
+    $message = isset($_POST['message']) ? trim($_POST['message']) : '';
 
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
- 
+    // Validate form fields
+    if (empty($name) || empty($email) || empty($message) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "Please complete all fields correctly.";
+        exit;
+    }
 
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  $contact->add_message( $_POST['message'], 'Message', 10);
+    // Email Headers
+    $headers = "From: $name <$email>\r\n";
+    $headers .= "Reply-To: $email\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-  echo $contact->send();
+    // Send the email
+    if (mail($to, $subject, $message, $headers)) {
+        echo "OK";  // This tells the JS file that the email was sent successfully
+    } else {
+        echo "Error sending email. Please try again.";
+    }
+} else {
+    echo "Invalid request.";
+}
 ?>
+
